@@ -52,16 +52,14 @@ apply`; Terraform changes only what differs.
 1. In Spotto, open **Connectors → Cloud Accounts → Create → AWS**. Add the account or
    organization and every account Spotto should cover. Billing is optional; see
    [Billing exports](#billing-exports).
-2. Under **Set up access with PowerShell**, select **Download PowerShell setup
-   package**; Terraform uses the same package. Review its trust and
-   permission policies, then save it next to your Terraform configuration.
+2. Under **Set up access with PowerShell or Terraform**, select **Download setup
+   package**. Review its trust and permission policies, then save it next to your Terraform configuration.
 3. Run `terraform init` and `terraform plan`. The plan stops with an explicit error
    if a provider is signed in to the wrong account, an account isn't in the package,
    or the package was edited or isn't for AWS.
 4. Run `terraform apply`, then `terraform output -raw aws_manual_onboarding_json`.
-5. In Spotto, paste the JSON into the results field (currently labelled **PowerShell
-   results JSON**) and choose **Read PowerShell results**. Then choose **Create** or
-   **Update**. Spotto then checks live that it can assume each role, read resources
+5. In Spotto, paste the JSON into **Setup results JSON** and choose **Read setup
+   results**. Then choose **Create** or **Update**. Spotto then checks live that it can assume each role, read resources
    and reach the billing export.
 
 `configured` in the handoff means the IAM setup completed. It doesn't prove Spotto
@@ -127,12 +125,19 @@ role needs:
 - the storage role gets S3 reads on the export's delivery path, plus `kms:Decrypt`
   when the export uses a KMS key.
 
-Where the setup instructions in Spotto need the role to exist before billing can be
-selected (for example, **Discover exports**):
+If you know the export details, enter them in Spotto and apply once. To find the
+export with **Discover exports** instead, the role must exist first, and the setup
+package can't carry the first-pass discovery policy:
 
 1. Leave billing sources empty and apply a discovery-only package.
-2. Add the billing sources in Spotto.
-3. Download a new package and apply again. Only the billing policies change.
+2. Add the billing source in Spotto. For the export definition account, generate the
+   role instructions and add the first-pass `SpottoBillingExportRead` inline policy to
+   the role in IAM. It can only list exports.
+3. Discover and choose the export, regenerate the role instructions, replace
+   `SpottoBillingExportRead` with the exact-export policy, then validate the export
+   destination.
+4. Download a new package and apply again. Terraform takes over
+   `SpottoBillingExportRead` and applies the remaining billing policies.
 
 Before applying to an account whose billing reads already work, check the
 `SpottoGuardrails` scope in the package. Its `DenyS3ObjectReadsOutsideBillingScopes`

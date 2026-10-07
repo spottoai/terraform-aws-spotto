@@ -1,5 +1,5 @@
 variable "setup_package_path" {
-  description = "Path to spotto-aws-setup.json downloaded from Spotto (Connectors > Cloud Accounts > AWS > Download PowerShell setup package)."
+  description = "Path to spotto-aws-setup.json downloaded from Spotto (Connectors > Cloud Accounts > AWS > Download setup package)."
   type        = string
   default     = "./spotto-aws-setup.json"
 }
