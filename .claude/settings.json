@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "spotto": {
+      "source": {
+        "source": "github",
+        "repo": "spottoai/core"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "spotto-core@spotto": true
+  }
+}

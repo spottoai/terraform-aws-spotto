@@ -1,0 +1,28 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# OS/editor
+.DS_Store
+Thumbs.db
+
+# Claude Code: personal settings and local skill links (see ../core/scripts/link-agent-skills.mjs)
+.claude/settings.local.json
+.claude/skills/
+
+# Reusable modules do not commit provider lock files
+.terraform.lock.hcl
+
+# Customer setup packages placed next to example configurations
+examples/**/spotto-aws-setup*.json

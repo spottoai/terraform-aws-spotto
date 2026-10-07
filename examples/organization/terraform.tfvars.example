@@ -1,0 +1,6 @@
+setup_package_path         = "./spotto-aws-setup.json"
+management_account_id      = "111122223333"
+billing_storage_account_id = "000011112222"
+workload_account_id        = "444455556666"
+# member_admin_role_name   = "AWSControlTowerExecution"
+# aws_profile              = "customer-management-admin"
