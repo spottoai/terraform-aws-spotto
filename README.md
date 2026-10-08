@@ -78,14 +78,14 @@ locals {
 }
 
 module "spotto_role" {
-  source = "git::https://github.com/spottoai/terraform-aws-spotto.git//modules/account-role?ref=v0.1.0"
+  source = "git::https://github.com/spottoai/terraform-aws-spotto.git//modules/account-role"
 
   setup_package = local.setup_package
   account_id    = "111122223333"
 }
 
 module "spotto_handoff" {
-  source = "git::https://github.com/spottoai/terraform-aws-spotto.git//modules/handoff?ref=v0.1.0"
+  source = "git::https://github.com/spottoai/terraform-aws-spotto.git//modules/handoff"
 
   setup_package   = local.setup_package
   account_results = [module.spotto_role.handoff_result]
@@ -96,8 +96,9 @@ output "aws_manual_onboarding_json" {
 }
 ```
 
-Reference the modules from the repository root with a `//modules/...` subdirectory
-(or a registry source), as shown. They share `modules/setup-package` by relative
+The examples always use the latest version from `main`. Run `terraform init -upgrade`
+to pick up module updates. Reference the modules from the repository root with a
+`//modules/...` subdirectory, as shown. They share `modules/setup-package` by relative
 path, so you can't copy one module directory on its own, or point at it with an
 absolute local path.
 

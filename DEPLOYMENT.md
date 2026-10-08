@@ -11,7 +11,9 @@ Owner: Platform
 ## Module usage
 See `README.md` and `examples/` for module configuration and onboarding workflows.
 Customers reference modules with a repository subdirectory source, for example
-`git::https://github.com/spottoai/terraform-aws-spotto.git//modules/account-role?ref=<tag>`.
+`git::https://github.com/spottoai/terraform-aws-spotto.git//modules/account-role`.
+Sources are unpinned: customers always use the latest `main`, so keep `main` releasable
+and backward compatible with setup packages the portal has already issued.
 
 ## Verification
 Run `terraform init -backend=false && terraform test` in `modules/setup-package`,
@@ -25,4 +27,5 @@ External ID inside the role trust policy, but no AWS credentials.
 
 ## Release workflow
 Follow the standard process in `../core/DEPLOYMENT.md` unless a repo-specific exception
-is documented above. Tag releases so customers can pin `?ref=<tag>`.
+is documented above. Customer docs do not pin a version; changes on `main` reach customers
+on their next `terraform init -upgrade`.

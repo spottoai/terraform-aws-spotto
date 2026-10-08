@@ -63,5 +63,4 @@ Naming: `terraform-aws-spotto` follows the `terraform-<provider>-<name>` convent
   when matching; drift refused even with `-RepairExistingRole`.
 
 Outstanding: a customer-authorized live apply (including importing an existing role),
-a published release tag for `?ref=` sources, portal copy that names Terraform, and
-public docs.
+and public docs. Module sources are unpinned (latest `main`) by decision on 2026-10-08.
