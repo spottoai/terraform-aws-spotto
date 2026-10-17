@@ -44,7 +44,7 @@ output "roles" {
 
   precondition {
     condition     = alltrue([for check in local.role_checks : check.policies])
-    error_message = "Spotto guardrails, the SecurityAudit/ReadOnlyAccess managed policies and the documented Spotto policy names are required. Invalid for: ${join(", ", [for check in local.role_checks : check.account_id if !check.policies])}."
+    error_message = "Spotto policies must use the documented names and nonempty Statement arrays. Billing and commitments policies must be present exactly when their purposes are selected. Managed policies may be empty or contain only SecurityAudit/ReadOnlyAccess. Invalid for: ${join(", ", [for check in local.role_checks : check.account_id if !check.policies])}."
   }
 }
 

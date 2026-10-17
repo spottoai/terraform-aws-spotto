@@ -45,6 +45,38 @@ variables {
   workload_account_id        = "444455556666"
 }
 
+run "current_api_organization_applies_roles_and_round_trips_handoff" {
+  command = apply
+
+  variables {
+    setup_package_path = "../../tests/fixtures/spotto-aws-setup-current.json"
+  }
+
+  assert {
+    condition = (
+      length(module.spotto_management.managed_policy_arns) == 0 &&
+      length(module.spotto_billing_storage.managed_policy_arns) == 0 &&
+      length(module.spotto_workload.managed_policy_arns) == 0
+    )
+    error_message = "No account attaches managed policies for the current API package."
+  }
+
+  assert {
+    condition = jsondecode(output.aws_manual_onboarding_json) == {
+      kind          = "spotto.aws.manual-onboarding"
+      schemaVersion = 1
+      companyId     = "company-example"
+      configuration = jsondecode(file(var.setup_package_path)).configuration
+      results = [
+        { accountId = "111122223333", roleArn = "arn:aws:iam::111122223333:role/SpottoReadOnlyRole", status = "configured" },
+        { accountId = "000011112222", roleArn = "arn:aws:iam::000011112222:role/SpottoReadOnlyRole", status = "configured" },
+        { accountId = "444455556666", roleArn = "arn:aws:iam::444455556666:role/SpottoReadOnlyRole", status = "configured" },
+      ]
+    }
+    error_message = "The current API package produces the exact V1 handoff with unchanged configuration and every role result."
+  }
+}
+
 run "organization_apply_produces_portal_handoff" {
   command = apply
 

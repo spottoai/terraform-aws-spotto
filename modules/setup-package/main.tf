@@ -1,6 +1,6 @@
 # Parses and validates the portal-authored setup package. Policies, trust and the company
 # External ID come from the Spotto API; this module never generates IAM permissions.
-# Checks mirror Read-SpottoAwsSetupPackage in spotto-tools/onboarding/aws/Setup-SpottoAws.ps1.
+# Checks mirror the Bash and PowerShell onboarding scripts in spotto-tools/onboarding/aws.
 
 locals {
   package       = jsondecode(var.setup_package)
@@ -109,10 +109,26 @@ locals {
       )
       policies = try(
         role.setup.onboardingBundle.guardrailPolicyName == "SpottoGuardrails" &&
+        startswith(jsonencode(role.setup.onboardingBundle.guardrailPolicy.Statement), "[") &&
         length(role.setup.onboardingBundle.guardrailPolicy.Statement) > 0 &&
-        toset([for policy in role.setup.onboardingBundle.managedPolicies : policy.arn]) == toset(local.managed_policy_allowlist) &&
-        (!can(role.setup.onboardingBundle.billingAccessPolicy) || try(role.setup.onboardingBundle.billingAccessPolicyName == "SpottoBillingExportRead", false)) &&
-        (!can(role.setup.onboardingBundle.commitmentsAccessPolicy) || try(role.setup.onboardingBundle.commitmentsAccessPolicyName == "SpottoCommitmentsPlanning", false)),
+        startswith(jsonencode(role.setup.onboardingBundle.managedPolicies), "[") &&
+        alltrue([for policy in role.setup.onboardingBundle.managedPolicies : contains(local.managed_policy_allowlist, policy.arn)]) &&
+        can(role.setup.onboardingBundle.billingAccessPolicy) == anytrue([
+          for purpose in ["billing-definition", "billing-storage"] : contains(role.setup.onboardingBundle.rolePurposes, purpose)
+        ]) &&
+        can(role.setup.onboardingBundle.commitmentsAccessPolicy) == contains(role.setup.onboardingBundle.rolePurposes, "commitments-planning") &&
+        (!can(role.setup.onboardingBundle.billingAccessPolicy) || try(
+          role.setup.onboardingBundle.billingAccessPolicyName == "SpottoBillingExportRead" &&
+          startswith(jsonencode(role.setup.onboardingBundle.billingAccessPolicy.Statement), "[") &&
+          length(role.setup.onboardingBundle.billingAccessPolicy.Statement) > 0,
+          false
+        )) &&
+        (!can(role.setup.onboardingBundle.commitmentsAccessPolicy) || try(
+          role.setup.onboardingBundle.commitmentsAccessPolicyName == "SpottoCommitmentsPlanning" &&
+          startswith(jsonencode(role.setup.onboardingBundle.commitmentsAccessPolicy.Statement), "[") &&
+          length(role.setup.onboardingBundle.commitmentsAccessPolicy.Statement) > 0,
+          false
+        )),
         false
       )
     }

@@ -6,6 +6,29 @@ variables {
   setup_package = file("../../tests/fixtures/spotto-aws-setup.json")
 }
 
+run "current_api_package_needs_no_managed_policies" {
+  command = plan
+
+  variables {
+    setup_package = file("../../tests/fixtures/spotto-aws-setup-current.json")
+  }
+
+  assert {
+    condition     = output.account_ids == tolist(["000011112222", "111122223333", "444455556666"])
+    error_message = "The current API package covers every enabled account."
+  }
+
+  assert {
+    condition = alltrue([
+      for role in jsondecode(var.setup_package).roles :
+      length(output.roles[role.accountId].managed_policy_arns) == 0 &&
+      jsondecode(output.roles[role.accountId].trust_policy_json) == role.setup.onboardingBundle.trustPolicy &&
+      jsondecode(output.roles[role.accountId].inline_policies["SpottoGuardrails"]) == role.setup.onboardingBundle.guardrailPolicy
+    ])
+    error_message = "Current API trust and inline discovery guardrails pass through unchanged without managed policies."
+  }
+}
+
 run "valid_package_exposes_only_enabled_accounts" {
   command = plan
 
@@ -116,6 +139,27 @@ run "rejects_unexpected_managed_policy" {
   }
 
   expect_failures = [output.roles]
+}
+
+run "accepts_a_subset_of_legacy_allowlisted_policies" {
+  command = plan
+
+  variables {
+    setup_package = jsonencode(merge(jsondecode(file("../../tests/fixtures/spotto-aws-setup.json")), {
+      roles = [for role in jsondecode(file("../../tests/fixtures/spotto-aws-setup.json")).roles : merge(role, {
+        setup = merge(role.setup, {
+          onboardingBundle = merge(role.setup.onboardingBundle, {
+            managedPolicies = [{ arn = "arn:aws:iam::aws:policy/SecurityAudit" }]
+          })
+        })
+      })]
+    }))
+  }
+
+  assert {
+    condition     = alltrue([for role in values(output.roles) : role.managed_policy_arns == tolist(["arn:aws:iam::aws:policy/SecurityAudit"])])
+    error_message = "Legacy allowlisted policies are attached only when the package requests them."
+  }
 }
 
 run "rejects_purposes_not_backed_by_an_enabled_billing_source" {

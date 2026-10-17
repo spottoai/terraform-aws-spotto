@@ -4,7 +4,7 @@ description: Architecture of the Terraform modules that onboard customer AWS acc
 ---
 
 Status: living
-Last updated: 2026-10-06
+Last updated: 2026-10-16
 Owner: Platform
 Related docs: README.md, CHANGELOG.md, DEPLOYMENT.md, specs/aws/terraform-aws-spotto-onboarding.md, ../spotto-tools/onboarding/aws/README.md, ../core/specs/onboarding/aws-powershell-onboarding.md
 
@@ -41,11 +41,17 @@ Defines the architecture of the Terraform modules used to onboard AWS accounts i
 ## Integration boundaries & invariants
 - Never author IAM permissions here. Policies, trust and External ID come only from the package;
   duplicating the generator caused earlier permission drift.
-- Package validation stays aligned with `spotto-tools/onboarding/aws/Setup-SpottoAws.ps1`. Change
+- Package validation stays aligned with both scripts in `spotto-tools/onboarding/aws/`. Change
   both together, and regenerate the fixture when the API builder changes.
+- Billing and commitments policy documents must be present exactly when their role purposes
+  are selected, use the documented Spotto policy names, and contain nonempty `Statement`
+  arrays. Guardrails also require a nonempty `Statement` array.
 - The handoff configuration must round-trip unchanged; the portal compares it to the current draft.
 - Manage only `SpottoGuardrails`, `SpottoBillingExportRead`, `SpottoCommitmentsPlanning` and the
-  `SecurityAudit`/`ReadOnlyAccess` attachments; unrelated customer policies are untouched.
+  package-requested legacy `SecurityAudit`/`ReadOnlyAccess` attachments; unrelated
+  customer policies are untouched. Current packages have no managed policies and
+  carry discovery allows inside `SpottoGuardrails`; validation accepts an empty
+  list or only the two allowlisted legacy ARNs, matching PowerShell.
 - Roles carry `SpottoManagedBy=Terraform`; the PowerShell wizard is verify-only for them.
 - Fail the plan before mutation on wrong-account credentials, unknown accounts or a non-`aws` partition.
 - Modules reference `../setup-package`; consumers must use repository subdirectory or registry sources.

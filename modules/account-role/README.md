@@ -22,5 +22,7 @@ The plan fails before any change if the provider is signed in to another account
 if the account isn't an enabled account in the package, or if the partition isn't
 `aws`. Policies are passed through unchanged from the package; only
 `SpottoGuardrails`, `SpottoBillingExportRead` and `SpottoCommitmentsPlanning` are
-managed as inline policies. Guardrails are put in place before `SecurityAudit` and
-`ReadOnlyAccess` are attached.
+managed as inline policies. Current packages include discovery permissions in
+`SpottoGuardrails` and attach no managed policies. Legacy packages may request
+`SecurityAudit` and `ReadOnlyAccess`; guardrails are put in place before those
+attachments. No other managed policy ARNs are accepted.

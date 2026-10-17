@@ -2,10 +2,10 @@
 
 Terraform modules for onboarding AWS accounts and organizations into Spotto.
 
-This is the Terraform route for the same onboarding flow as the PowerShell wizard
-(`spotto-tools/onboarding/aws/Setup-SpottoAws.ps1`). Both consume the **setup
-package** (`spotto-aws-setup.json`) that you download from the Spotto portal. Both
-produce the same results JSON, which you paste back into Spotto.
+This is the Terraform route for the same onboarding flow as the
+[Bash and PowerShell scripts](https://github.com/spottoai/spotto-tools/tree/main/onboarding/aws).
+All consume the **setup package** (`spotto-aws-setup.json`) that you download from
+the Spotto portal and produce the same results JSON, which you paste back into Spotto.
 
 The modules never write IAM permissions of their own. The trust policy, the company
 External ID, the guardrails, and the billing and commitments policies are all
@@ -21,14 +21,16 @@ apply`; Terraform changes only what differs.
   - sets the API-authored trust policy;
   - adds the `SpottoGuardrails` inline policy, plus `SpottoBillingExportRead` and
     `SpottoCommitmentsPlanning` when the account's purposes need them;
-  - attaches `SecurityAudit` and `ReadOnlyAccess`;
+  - attaches only the managed policies requested by the package (current packages
+    use inline discovery permissions; legacy packages may request `SecurityAudit`
+    and `ReadOnlyAccess`);
   - tags the role `SpottoCompanyId=<company>` and `SpottoManagedBy=Terraform`.
 
   Before any change, it checks that the provider is signed in to the expected account.
 - `modules/handoff`: builds the portal results JSON from every account's
   `handoff_result`, and fails the plan if any package account is missing or doesn't match.
 - `modules/setup-package`: parses and validates the package, and is used by the other
-  two modules. It has no resources and makes the same checks as the PowerShell wizard.
+  two modules. It has no resources and validates the same package contract as the onboarding scripts.
 
 ## Requirements
 
@@ -52,14 +54,14 @@ apply`; Terraform changes only what differs.
 1. In Spotto, open **Connectors → Cloud Accounts → Create → AWS**. Add the account or
    organization and every account Spotto should cover. Billing is optional; see
    [Billing exports](#billing-exports).
-2. Under **Set up access with PowerShell or Terraform**, select **Download setup
-   package**. Review its trust and permission policies, then save it next to your Terraform configuration.
+2. On the **Deploy Access** step, choose **Bash, PowerShell or Terraform**, then select
+   **Download Setup Package**. Review its trust and permission policies, then save it next to your Terraform configuration.
 3. Run `terraform init` and `terraform plan`. The plan stops with an explicit error
    if a provider is signed in to the wrong account, an account isn't in the package,
    or the package was edited or isn't for AWS.
 4. Run `terraform apply`, then `terraform output -raw aws_manual_onboarding_json`.
-5. In Spotto, paste the JSON into **Setup results JSON** and choose **Read setup
-   results**. Then choose **Create** or **Update**. Spotto then checks live that it can assume each role, read resources
+5. In Spotto, paste the JSON into **Setup Results JSON** and choose **Read Setup
+   Results**. Then choose **Create** or **Update**. Spotto then checks live that it can assume each role, read resources
    and reach the billing export.
 
 `configured` in the handoff means the IAM setup completed. It doesn't prove Spotto
@@ -149,7 +151,7 @@ deny blocks the real export data.
 ## Existing roles
 
 `SpottoReadOnlyRole` might already exist, for example from the manual instructions,
-the PowerShell wizard or a previous tool. If you apply without importing it, the
+the Bash script, PowerShell wizard or a previous tool. If you apply without importing it, the
 apply fails with `EntityAlreadyExists`; the role is never adopted silently. To bring
 it under Terraform, add import blocks to your root module and review the plan:
 
@@ -170,23 +172,30 @@ import {
 }
 ```
 
-Import the other Spotto inline policies and managed attachments the same way. The
-plan then shows the exact trust, policy and tag changes, including the switch to
-`SpottoManagedBy=Terraform`.
+The managed attachment import above applies to legacy packages only. Import the
+other Spotto inline policies and any package-requested managed attachments the
+same way. The plan then shows the exact trust, policy and tag changes, including
+the switch to `SpottoManagedBy=Terraform`.
 
-Terraform manages only the role, the three Spotto inline policy names and the two
-AWS managed policy attachments. Other customer inline or managed policies on the
-role are left alone. Don't import a role that a CloudFormation stack owns; update
-that stack instead.
+Terraform manages only the role, the three Spotto inline policy names and any
+package-requested legacy `SecurityAudit`/`ReadOnlyAccess` attachments. Applying a
+current package removes legacy attachments already tracked in Terraform state;
+untracked attachments remain untouched. Other customer inline or managed policies
+on the role are left alone. Don't import a role that a CloudFormation stack owns;
+update that stack instead.
 
-## Coexistence with the PowerShell wizard
+## Coexistence with the Bash and PowerShell scripts
 
-The wizard treats a role tagged `SpottoManagedBy=Terraform` as verify-only:
+Both scripts treat a role tagged `SpottoManagedBy=Terraform` as verify-only:
 
 - If the role matches the package, `-CheckOnly` reports `configuration-matches`, and
   configure mode reports `configured` without writing anything.
 - If it drifts, the wizard lists the differences and refuses to change the role, even
   with `-RepairExistingRole`. Apply the fix with Terraform.
+
+For Bash, use `--check-only` and `--repair-existing-role` instead of the PowerShell
+switches. Get the [Bash script and usage guide](https://github.com/spottoai/spotto-tools/tree/main/onboarding/aws)
+or read the [Bash onboarding documentation](https://docs.spotto.ai/docs/portal/cloud-account-aws/bash).
 
 This means only one tool ever writes to the role.
 
@@ -228,8 +237,14 @@ for dir in modules/setup-package modules/account-role modules/handoff examples/o
 done
 ```
 
-`tests/fixtures/spotto-aws-setup.json` is generated by the real API bundle builder;
-`tests/fixtures/generate-fixture.ts` reproduces it from a sibling `api` checkout.
+The fixtures preserve both legacy managed-policy packages and current inline
+discovery packages generated by the real API bundle builder. See
+[`tests/fixtures/README.md`](tests/fixtures/README.md) for provenance and regeneration.
+Package validation requires billing and commitments policies exactly when their
+role purposes are selected, with the documented names and nonempty `Statement`
+arrays. Native regressions cover missing, unexpected and malformed policies.
+See [CHANGELOG.md](CHANGELOG.md) for the planned 0.2.0 release and legacy attachment
+migration behavior.
 
 ## Limitations
 

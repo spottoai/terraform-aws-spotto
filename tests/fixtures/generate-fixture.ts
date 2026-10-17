@@ -1,6 +1,6 @@
-// Regenerates spotto-aws-setup.json with the real API bundle builder (sibling ../api checkout).
+// Regenerates spotto-aws-setup-current.json with the real API bundle builder (sibling ../api checkout).
 // Purposes use the portal's canonical order so the configuration round-trips through the portal draft.
-// Run from ../api: node_modules/.bin/esbuild ../terraform-aws-spotto/tests/fixtures/generate-fixture.ts --bundle --platform=node --format=cjs --outfile=/tmp/generate-fixture.cjs && node /tmp/generate-fixture.cjs ../terraform-aws-spotto/tests/fixtures/spotto-aws-setup.json
+// Run from ../api: node_modules/.bin/esbuild ../terraform-aws-spotto/tests/fixtures/generate-fixture.ts --bundle --platform=node --format=cjs --outfile=/tmp/generate-fixture.cjs && node /tmp/generate-fixture.cjs ../terraform-aws-spotto/tests/fixtures/spotto-aws-setup-current.json
 import { writeFileSync } from 'node:fs';
 import { AwsIamOnboardingBundleBuilder } from '../../../api/services/CloudAccounts/AwsIamOnboardingBundleBuilder';
 

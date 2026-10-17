@@ -31,6 +31,34 @@ variables {
   account_id    = "111122223333"
 }
 
+run "current_api_role_uses_exact_inline_policies_without_managed_attachments" {
+  command = apply
+
+  variables {
+    setup_package = file("../../tests/fixtures/spotto-aws-setup-current.json")
+  }
+
+  assert {
+    condition     = jsondecode(aws_iam_role.spotto.assume_role_policy) == jsondecode(var.setup_package).roles[0].setup.onboardingBundle.trustPolicy
+    error_message = "The current API company trust is applied unchanged."
+  }
+
+  assert {
+    condition = (
+      keys(aws_iam_role_policy.spotto) == ["SpottoBillingExportRead", "SpottoCommitmentsPlanning", "SpottoGuardrails"] &&
+      jsondecode(aws_iam_role_policy.spotto["SpottoBillingExportRead"].policy) == jsondecode(var.setup_package).roles[0].setup.onboardingBundle.billingAccessPolicy &&
+      jsondecode(aws_iam_role_policy.spotto["SpottoCommitmentsPlanning"].policy) == jsondecode(var.setup_package).roles[0].setup.onboardingBundle.commitmentsAccessPolicy &&
+      jsondecode(aws_iam_role_policy.spotto["SpottoGuardrails"].policy) == jsondecode(var.setup_package).roles[0].setup.onboardingBundle.guardrailPolicy
+    )
+    error_message = "Current API discovery, billing and commitments policies are applied unchanged."
+  }
+
+  assert {
+    condition     = length(aws_iam_role_policy_attachment.managed) == 0 && length(output.managed_policy_arns) == 0
+    error_message = "The current package creates no AWS managed policy attachments."
+  }
+}
+
 run "management_account_gets_definition_and_commitments_policies" {
   command = apply
 
