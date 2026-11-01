@@ -1,58 +1,48 @@
 ---
 name: terraform-aws-spotto-architecture
-description: Architecture of the Terraform modules that onboard customer AWS accounts and organizations into Spotto (SpottoReadOnlyRole, API-authored policies, portal handoff). Use when changing module inputs or outputs, package validation, role policies, examples, or the Terraform AWS onboarding flow.
+description: Architecture of the Terraform module that connects customer AWS accounts and organizations to Spotto by deploying the hosted CloudFormation templates (SpottoConnect, SpottoBillingAccess, SpottoMemberAccounts). Use when changing module inputs or outputs, stack parameters, examples, or the Terraform AWS onboarding flow.
 ---
 
 Status: living
-Last updated: 2026-10-16
+Last updated: 2026-10-22
 Owner: Platform
-Related docs: README.md, CHANGELOG.md, DEPLOYMENT.md, specs/aws/terraform-aws-spotto-onboarding.md, ../spotto-tools/onboarding/aws/README.md, ../core/specs/onboarding/aws-powershell-onboarding.md
+Related docs: README.md, CHANGELOG.md, DEPLOYMENT.md, specs/cloud-accounts/assisted-connection/assisted-connection-terraform-aws-spotto.md, ../core/specs/cloud-accounts/connections/assisted-connection/assisted-connection-aws.md
 
 # terraform-aws-spotto-architecture
 
 ## Purpose
-Defines the architecture of the Terraform modules used to onboard AWS accounts into Spotto.
+Defines the architecture of the Terraform module used to connect AWS accounts to Spotto.
 
 ## Scope
-- Covers module structure, package validation, role resources, the portal handoff and examples.
-- Excludes the API policy generator, portal UI and engine validation.
+- Covers the root module, its stacks, inputs, outputs, tests and examples.
+- Excludes the CloudFormation templates (generated in api, published from spotto-tools),
+  the portal UI and the connect API.
 
 ## System context
-- Upstream: the Spotto portal setup package (`kind: spotto.aws.setup`, V1), authored by the API's
-  `AwsIamOnboardingBundleBuilder` and downloaded by a customer administrator.
-- Downstream: customer-managed `SpottoReadOnlyRole` per AWS account, and the portal results JSON
-  (`kind: spotto.aws.manual-onboarding`, V1) shared with the PowerShell wizard.
-- Primary responsibility: apply the API-authored role configuration declaratively.
+- Upstream: the hosted templates at `https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v<TemplateVersion>/`
+  (`spotto-aws-connect`, `spotto-aws-billing-access`, `spotto-aws-members`), plus the
+  company External ID and trusted principal ARN shown in the portal.
+- Downstream: CloudFormation stacks in the customer's management or standalone account,
+  which create `SpottoReadOnlyRole`, its policies, the optional billing bucket and export,
+  and the member-account StackSet. The portal detects the role through `connect/check`.
 
 ## Key components
-- `modules/setup-package/` - resource-free parser/validator; mirrors `Read-SpottoAwsSetupPackage`.
-- `modules/account-role/` - one account's role, Spotto inline policies and managed attachments.
-- `modules/handoff/` - portal results JSON covering every package account exactly once.
-- `examples/` - single account; organization with split billing storage via assume_role.
-- `tests/fixtures/` - API-generated package fixture and its generator.
-
-## Data flow (happy path)
-1. Customer configures accounts and billing in Spotto and downloads the setup package.
-2. `account-role` instances (one provider per account) validate the package and caller account,
-   then apply trust, guardrails, billing/commitments policies and managed policies.
-3. `handoff` emits the results JSON; the customer pastes it into Spotto.
-4. Spotto Create/Update performs live access validation (engine-owned).
+- `main.tf` - regional access/member/billing-access stacks plus a separate definition-only
+  us-east-1 stack. The provider v6 `region` argument selects each stack region.
+- `variables.tf` - inputs and their format and combination checks.
+- `outputs.tf` - role ARN, billing bucket, export ARN and stack IDs.
+- `tests/` - mocked-provider `terraform test` files.
+- `examples/` - standalone account; organization with member accounts.
 
 ## Integration boundaries & invariants
-- Never author IAM permissions here. Policies, trust and External ID come only from the package;
-  duplicating the generator caused earlier permission drift.
-- Package validation stays aligned with both scripts in `spotto-tools/onboarding/aws/`. Change
-  both together, and regenerate the fixture when the API builder changes.
-- Billing and commitments policy documents must be present exactly when their role purposes
-  are selected, use the documented Spotto policy names, and contain nonempty `Statement`
-  arrays. Guardrails also require a nonempty `Statement` array.
-- The handoff configuration must round-trip unchanged; the portal compares it to the current draft.
-- Manage only `SpottoGuardrails`, `SpottoBillingExportRead`, `SpottoCommitmentsPlanning` and the
-  package-requested legacy `SecurityAudit`/`ReadOnlyAccess` attachments; unrelated
-  customer policies are untouched. Current packages have no managed policies and
-  carry discovery allows inside `SpottoGuardrails`; validation accepts an empty
-  list or only the two allowlisted legacy ARNs, matching PowerShell.
-- Roles carry `SpottoManagedBy=Terraform`; the PowerShell wizard is verify-only for them.
-- Fail the plan before mutation on wrong-account credentials, unknown accounts or a non-`aws` partition.
-- Modules reference `../setup-package`; consumers must use repository subdirectory or registry sources.
-- Outputs remain backward compatible for existing automation.
+- Never author IAM, S3 or export resources here. CloudFormation is the single source of
+  truth for the role; the scripts, portal and Terraform deploy the same templates.
+- Stack names (`SpottoConnect`, `SpottoBillingAccess`, `SpottoMemberAccounts`), parameter
+  names and output names must match the templates and the core spec.
+- `existing_export` forces `CostData=None`; an explicit `cost_data = "CreateExport"` with
+  it is rejected. Billing is required, so `cost_data = "None"` is rejected too.
+- `local.template_version` pins the template version; each template release needs a module
+  release that bumps it. Terraform can't detect changes behind an unchanged URL.
+- `repair_token` maps to `RepairToken` on the connect stack only; the members template has
+  no such parameter yet.
+- Commercial `aws` partition only.

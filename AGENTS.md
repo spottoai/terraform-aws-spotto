@@ -1,7 +1,7 @@
 # terraform-aws-spotto AGENTS.md
 
 ## Overview
-Terraform modules for onboarding AWS accounts and organizations into Spotto.
+Terraform module that connects AWS accounts and organizations to Spotto by deploying the hosted CloudFormation templates.
 
 ## How to read this repo
 - Start with this `AGENTS.md`.
@@ -13,12 +13,13 @@ Terraform modules for onboarding AWS accounts and organizations into Spotto.
 - `.agents/skills/terraform-aws-spotto-architecture/SKILL.md`
 - `DEPLOYMENT.md`
 - `CHANGELOG.md`
-- `specs/aws/terraform-aws-spotto-onboarding.md`
+- `specs/cloud-accounts/assisted-connection/assisted-connection-terraform-aws-spotto.md`
+- `../core/specs/cloud-accounts/connections/assisted-connection/assisted-connection-aws.md`
 
 ## Key folders
-- `modules/` (Terraform modules)
+- Repository root (the module: `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`)
 - `examples/` (usage examples)
-- `tests/fixtures/` (API-generated setup package fixture and its generator)
+- `tests/` (Terraform-native tests with a mocked AWS provider)
 
 ## Architecture
 - `.agents/skills/terraform-aws-spotto-architecture/SKILL.md`

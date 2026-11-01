@@ -1,6 +1,6 @@
-setup_package_path         = "./spotto-aws-setup.json"
-management_account_id      = "111122223333"
-billing_storage_account_id = "000011112222"
-workload_account_id        = "444455556666"
-# member_admin_role_name   = "AWSControlTowerExecution"
-# aws_profile              = "customer-management-admin"
+deployment = "dev-au"
+registration_topic_arn = "arn:aws:sns:ap-southeast-2:715809501612:spotto-aws-connect-dev-au"
+external_id             = "spotto-00000000-0000-0000-0000-000000000000"
+trusted_principal_arn   = "arn:aws:iam::999988887777:role/example-engine"
+organizational_unit_ids = ["r-ab12"]
+# aws_profile           = "customer-management-admin"

@@ -23,6 +23,3 @@ Thumbs.db
 
 # Reusable modules do not commit provider lock files
 .terraform.lock.hcl
-
-# Customer setup packages placed next to example configurations
-examples/**/spotto-aws-setup*.json

@@ -1,11 +1,12 @@
-variable "setup_package_path" {
-  description = "Path to spotto-aws-setup.json downloaded from Spotto (Connectors > Cloud Accounts > AWS > Download setup package)."
+# One standalone account with a new CUR 2.0 billing export (CostData=CreateExport).
+
+variable "external_id" {
+  description = "Company External ID from the portal (Other Ways to Connect > Terraform)."
   type        = string
-  default     = "./spotto-aws-setup.json"
 }
 
-variable "account_id" {
-  description = "12-digit AWS account ID to configure. The provider must authenticate to this account."
+variable "trusted_principal_arn" {
+  description = "Trusted principal ARN from the portal (Other Ways to Connect > Terraform)."
   type        = string
 }
 
@@ -15,29 +16,22 @@ variable "aws_profile" {
   default     = null
 }
 
-locals {
-  setup_package = file(var.setup_package_path)
-}
+module "spotto" {
+  deployment             = var.deployment
+  registration_topic_arn = var.registration_topic_arn
+  source                 = "../../"
 
-module "spotto_role" {
-  source = "../../modules/account-role"
-
-  setup_package = local.setup_package
-  account_id    = var.account_id
-}
-
-module "spotto_handoff" {
-  source = "../../modules/handoff"
-
-  setup_package   = local.setup_package
-  account_results = [module.spotto_role.handoff_result]
+  external_id           = var.external_id
+  trusted_principal_arn = var.trusted_principal_arn
 }
 
 output "role_arn" {
-  value = module.spotto_role.role_arn
+  value = module.spotto.role_arn
 }
 
-# terraform output -raw aws_manual_onboarding_json, then paste it into Spotto.
-output "aws_manual_onboarding_json" {
-  value = module.spotto_handoff.aws_manual_onboarding_json
+output "billing_bucket_name" {
+  value = module.spotto.billing_bucket_name
 }
+
+variable "deployment" { type = string }
+variable "registration_topic_arn" { type = string }

@@ -1,3 +1,5 @@
-setup_package_path = "./spotto-aws-setup.json"
-account_id         = "111122223333"
-# aws_profile      = "customer-admin"
+deployment = "dev-au"
+registration_topic_arn = "arn:aws:sns:ap-southeast-2:715809501612:spotto-aws-connect-dev-au"
+external_id           = "spotto-00000000-0000-0000-0000-000000000000"
+trusted_principal_arn = "arn:aws:iam::999988887777:role/example-engine"
+# aws_profile         = "customer-admin"
