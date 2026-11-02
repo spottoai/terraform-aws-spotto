@@ -18,6 +18,8 @@ the portal's **Launch Stack in AWS** and the CloudShell command all create the s
   them) before applying 1.0.0.
 - The read-only inline policy is now `SpottoReadOnlyAccess`, and the role is tagged
   `SpottoManagedBy=CloudFormation`.
+- Template 2026-11-02.1: the connect stack's console form groups the values the setup link fills in and
+  no longer lists every deployment in a dropdown; its parameter descriptions say the values are pre-filled.
 - Template 2026-10-30.1: the role allows 4-hour sessions (`MaxSessionDuration` 14400) so
   long security framework assessment scans keep valid credentials.
 - `template_base_url` defaults to the versioned template path this release pins, so an

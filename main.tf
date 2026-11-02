@@ -5,7 +5,7 @@
 locals {
   # Template version this module release pins. Bump it with every template release.
   # Must equal Metadata.TemplateVersion of the generated templates (AWS_CONNECT_TEMPLATE_VERSION in api).
-  template_version  = "2026-10-30.1"
+  template_version  = "2026-11-02.1"
   template_base_url = coalesce(var.template_base_url, "https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v${local.template_version}/")
 
   regions     = { dev-au = "ap-southeast-2", prod-au = "ap-southeast-2", prod-us = "us-east-1", prod-eu = "eu-north-1" }

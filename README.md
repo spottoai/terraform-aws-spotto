@@ -219,7 +219,7 @@ only the global AWS export definition in us-east-1 after regional storage is rea
 It has no External ID or SNS callback and derives the destination owner/bucket from
 its own AWS account/deployment. Existing-export mode creates no new export.
 
-The module pins template version `2026-10-30.1`; publish that release's five JSON
+The module pins template version `2026-11-02.1`; publish that release's five JSON
 files before applying. Billing resources are retained. AWS limits CUR 2.0 exports
 to five per account; use a supported existing source if capacity is exhausted.
 See `DEPLOYMENT.md` for mocked-provider verification and release order.
