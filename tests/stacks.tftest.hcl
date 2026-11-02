@@ -28,7 +28,7 @@ run "new_export_plan" {
   }
 
   assert {
-    condition     = aws_cloudformation_stack.connect.template_url == "https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v2026-11-02.1/spotto-aws-connect.template.json"
+    condition     = aws_cloudformation_stack.connect.template_url == "https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v2026-11-03.1/spotto-aws-connect.template.json"
     error_message = "The connect stack must use the pinned versioned connect template."
   }
 
@@ -117,7 +117,7 @@ run "existing_export" {
   }
 
   assert {
-    condition     = aws_cloudformation_stack.billing_access[0].template_url == "https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v2026-11-02.1/spotto-aws-billing-access.template.json"
+    condition     = aws_cloudformation_stack.billing_access[0].template_url == "https://spotto-aws-onboarding.s3.amazonaws.com/cloudformation/v2026-11-03.1/spotto-aws-billing-access.template.json"
     error_message = "The billing access stack must use the pinned versioned billing access template."
   }
 
